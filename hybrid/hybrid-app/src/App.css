@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.App {
+  text-align: center;
+  margin: 0;
+}
+
+textarea {
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 20px;
+}
+
+button {
+  margin-bottom: 20px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  margin: 10px 0;
+}
+
+.dashboard {
+  margin-left: 0;
+}
+
+.fixed-width {
+  width: 782px;
+}

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: schemas.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: schemas.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import mongoose from 'mongoose';
+
+// Define the schema for each metric
+/**
+ * Schema defining the structure for individual performance metrics.
+ * 
+ * @property {Number} value - The numerical value of the metric.
+ * @property {Number} time - The timestamp (in milliseconds) when the metric was recorded.
+ * 
+ * @type {mongoose.Schema}
+ */
+const metricSchema = new mongoose.Schema({
+    value: { type: Number, required: true },
+    time: { type: Number, required: true },
+}, { timestamps: true });
+
+/**
+ * Schema defining performance metrics for both mobile and desktop.
+ * Includes key metrics such as FCP, SI, LCP, TBT, CLS, and total performance score.
+ * 
+ * @type {mongoose.Schema}
+ */
+const performanceMetricsSchema = new mongoose.Schema({
+    mobile: {
+        fcp: { type: metricSchema, required: true },
+        si: { type: metricSchema, required: true },
+        lcp: { type: metricSchema, required: true },
+        tbt: { type: metricSchema, required: true },
+        cls: { type: metricSchema, required: true },
+        totalPerformance: { type: Number, required: true } 
+    },
+    desktop: {
+        fcp: { type: metricSchema, required: true },
+        si: { type: metricSchema, required: true },
+        lcp: { type: metricSchema, required: true },
+        tbt: { type: metricSchema, required: true },
+        cls: { type: metricSchema, required: true },
+        totalPerformance: { type: Number, required: true } 
+    }
+});
+
+/**
+ * Schema defining a performance report associated with a specific URL.
+ * Each report stores performance metrics for both mobile and desktop.
+ * 
+ * @type {mongoose.Schema}
+ */
+const reportSchema = new mongoose.Schema({
+    url: { type: String, required: true, unique: true },  // URL is unique
+    performanceMetrics: { type: performanceMetricsSchema, required: true },
+});
+
+/**
+ * Mongoose model for performance reports.
+ * 
+ * @type {mongoose.Model}
+ */
+export const Report = mongoose.model('Report', reportSchema);
+
+// Define the schema for ping results
+/**
+ * Schema for storing ping results associated with a specific URL.
+ * Includes metrics such as host, alive status, time, min, max, avg, and packet loss.
+ * 
+ * @type {mongoose.Schema}
+ */
+const pingSchema = new mongoose.Schema({
+    host: { type: String, required: true },
+    alive: { type: Boolean, required: true },
+    time: { type: Number }, 
+    min: { type: Number },  // minimum time (ms)
+    max: { type: Number },  // maximum time (ms)
+    avg: { type: Number },  // average time (ms)
+    packetLoss: { type: String }, // percentage of packet loss
+}, { timestamps: true });
+
+/**
+ * Schema defining ping metrics for a URL.
+ * 
+ * @type {mongoose.Schema}
+ */
+const pingMetricsSchema = new mongoose.Schema({
+    url: { type: String, required: true, unique: true },  
+    pingMetrics: { type: pingSchema, required: true }
+});
+
+/**
+ * Mongoose model for storing ping reports.
+ * 
+ * @type {mongoose.Model}
+ */
+export const PingReport = mongoose.model('Ping', pingMetricsSchema);
+
+// Define the schema for a single hop in the traceroute
+/**
+ * Schema for a single hop in a traceroute, storing hop number, IP address, and latency.
+ * 
+ * @type {mongoose.Schema}
+ */
+const HopSchema = new mongoose.Schema({
+    hopNumber: { type: Number, required: true },
+    ipAddress: { type: String, required: true },
+    latency: { type: Number, required: true }
+});
+
+// Define the schema for the entire traceroute associated with a URL
+/**
+ * Schema for storing traceroute data associated with a specific URL.
+ * Includes an array of hops and a timestamp.
+ * 
+ * @type {mongoose.Schema}
+ */
+const TracerouteSchema = new mongoose.Schema({
+    url: { type: String, required: true, unique: true },
+    tracerouteData: { type: [HopSchema], required: true },
+    timestamp: { type: Date, default: Date.now }
+});
+
+/**
+ * Mongoose model for storing traceroute data.
+ * 
+ * @type {mongoose.Model}
+ */
+export const Traceroute = mongoose.model('Traceroute', TracerouteSchema);
+
+// Define the schema for tags associated with alerts
+/**
+ * Schema for storing tags related to OWASP vulnerabilities.
+ * 
+ * @type {mongoose.Schema}
+ */
+const tagSchema = new mongoose.Schema({
+    OWASP_2021_A05: { type: String },
+    OWASP_2017_A06: { type: String }
+});
+
+// Define the schema for alerts within security reports
+/**
+ * Schema for storing security alerts including metadata like risk, description, evidence, and CWE/WASC IDs.
+ * 
+ * @type {mongoose.Schema}
+ */
+const alertsSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    risk: { type: String, required: true },
+    description: { type: String, required: true },
+    confidence: { type: String, required: true },
+    evidence: { type: String, required: true },
+    solution: { type: String, required: true },
+    reference: { type: String, required: true },
+    attacks: { type: String },
+    cweid: { type: Number, required: true },
+    wascid: { type: Number, required: true },
+    alertRef: { type: String, required: true },
+    tags: { type: tagSchema }
+});
+
+// Define the schema for the security report
+/**
+ * Schema for storing security reports for a URL.
+ * Includes an array of alerts and a timestamp.
+ * 
+ * @type {mongoose.Schema}
+ */
+const securitySchema = new mongoose.Schema({
+    url: { type: String, required: true, unique: true },
+    alerts: { type: [alertsSchema], required: true },
+    timestamp: { type: Date, default: Date.now }
+});
+
+/**
+ * Mongoose model for storing security reports.
+ * 
+ * @type {mongoose.Model}
+ */
+export const Security = mongoose.model('Security', securitySchema);
+
+/**
+ * Saves or updates a document in MongoDB.
+ * Finds a document by query, updates it with new data, and saves the timestamp.
+ * If the document does not exist, it will be created.
+ * 
+ * @async
+ * @param {mongoose.Model} model - The Mongoose model to update.
+ * @param {Object} query - The query object used to find the document.
+ * @param {Object} update - The update object with new data to save.
+ * 
+ * @throws Will throw an error if the save operation fails.
+ * 
+ * @returns {Promise&lt;void>}
+ */
+export async function Save(model, query, update) {
+    try {
+        await model.findOneAndUpdate(
+            query,
+            { $set: { alerts: update, timestamp: new Date() } },
+            { upsert: true, new: true }
+        );
+    } catch (error) {
+        console.error(`Error saving to MongoDB:`, error);
+        throw error;
+    }
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Events</h3><ul><li><a href="global.html#event:process:SIGINT">process:SIGINT</a></li><li><a href="global.html#event:process:exit">process:exit</a></li><li><a href="global.html#event:process:uncaughtException">process:uncaughtException</a></li></ul><h3>Global</h3><ul><li><a href="global.html#DELETE/report/:id">DELETE /report/:id</a></li><li><a href="global.html#GET/">GET /</a></li><li><a href="global.html#GET/SSL/:url">GET /SSL/:url</a></li><li><a href="global.html#GET/ping/:url">GET /ping/:url</a></li><li><a href="global.html#GET/report/:url">GET /report/:url</a></li><li><a href="global.html#GET/security/:url">GET /security/:url</a></li><li><a href="global.html#GET/trace/:url">GET /trace/:url</a></li><li><a href="global.html#HopSchema">HopSchema</a></li><li><a href="global.html#MONGO_URI">MONGO_URI</a></li><li><a href="global.html#POST/report">POST /report</a></li><li><a href="global.html#PingReport">PingReport</a></li><li><a href="global.html#Report">Report</a></li><li><a href="global.html#Save">Save</a></li><li><a href="global.html#Security">Security</a></li><li><a href="global.html#SecurityScan">SecurityScan</a></li><li><a href="global.html#Traceroute">Traceroute</a></li><li><a href="global.html#TracerouteSchema">TracerouteSchema</a></li><li><a href="global.html#alertsSchema">alertsSchema</a></li><li><a href="global.html#calculateMetricValue">calculateMetricValue</a></li><li><a href="global.html#calculatePerformanceMetrics">calculatePerformanceMetrics</a></li><li><a href="global.html#createReportQueue">createReportQueue</a></li><li><a href="global.html#createReportStore">createReportStore</a></li><li><a href="global.html#createReportWithBrowser">createReportWithBrowser</a></li><li><a href="global.html#createReportWorker">createReportWorker</a></li><li><a href="global.html#doReportWork">doReportWork</a></li><li><a href="global.html#getSharedBrowser">getSharedBrowser</a></li><li><a href="global.html#getSharedPage">getSharedPage</a></li><li><a href="global.html#handleMongoSave">handleMongoSave</a></li><li><a href="global.html#handleReportSave">handleReportSave</a></li><li><a href="global.html#metricSchema">metricSchema</a></li><li><a href="global.html#parseTracerouteOutput">parseTracerouteOutput</a></li><li><a href="global.html#performPing">performPing</a></li><li><a href="global.html#performSSLCheck">performSSLCheck</a></li><li><a href="global.html#performTraceroute">performTraceroute</a></li><li><a href="global.html#performanceMetricsSchema">performanceMetricsSchema</a></li><li><a href="global.html#pingMetricsSchema">pingMetricsSchema</a></li><li><a href="global.html#pingSchema">pingSchema</a></li><li><a href="global.html#port">port</a></li><li><a href="global.html#reportSchema">reportSchema</a></li><li><a href="global.html#requestGenerateReport">requestGenerateReport</a></li><li><a href="global.html#runLighthouseWithRetry">runLighthouseWithRetry</a></li><li><a href="global.html#scheduleReportGeneration">scheduleReportGeneration</a></li><li><a href="global.html#securitySchema">securitySchema</a></li><li><a href="global.html#server">server</a></li><li><a href="global.html#shutdown">shutdown</a></li><li><a href="global.html#tagSchema">tagSchema</a></li><li><a href="global.html#traceRoute">traceRoute</a></li><li><a href="global.html#zapOptions">zapOptions</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.3</a> on Tue Aug 27 2024 11:26:21 GMT+0300 (Arabian Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
